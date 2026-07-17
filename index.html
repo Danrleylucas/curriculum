@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  PORTFÓLIO — DANRLEI LUCAS | SEGURANÇA DA INFORMAÇÃO
+  ============================================================
+  Estilo visual inspirado na FIAP: fundo preto, magenta vibrante,
+  tipografia gigante em caixa alta e pegada tech/minimalista.
+
+  NOVIDADE DESTA VERSÃO:
+  - Fundo ANIMADO no hero: "chuva digital" (efeito Matrix) em
+    magenta, desenhada em <canvas> com JavaScript. É mais leve e
+    mais SEGURO que um vídeo real: não carrega arquivo externo,
+    não quebra a política CSP e pesa quase nada.
+  - Conteúdo real: sobre, experiências, projetos, recomendações
+    do LinkedIn e contatos.
+
+  ESTRUTURA DO ARQUIVO:
+  1. <head>   → metadados, segurança (CSP), fontes e CSS
+  2. <body>   → seções: Hero, Sobre, Experiência, Projetos,
+                Recomendações e Contato
+  3. <script> → JavaScript (animação Matrix, menu mobile,
+                efeito terminal, animações de rolagem)
+
+  COMO EDITAR:
+  - Textos: procure os comentários "EDITE AQUI".
+  - Cores: variáveis CSS em :root.
+  ============================================================
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <!-- Garante que o site se adapte a telas de celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!--
+    ============ SEGURANÇA: CONTENT SECURITY POLICY (CSP) ============
+    Define de onde o navegador pode carregar recursos. Mitiga XSS
+    (Cross-Site Scripting) e injeção de conteúdo malicioso.
+    Observação: a animação Matrix roda 100% local em <canvas>,
+    então não precisamos liberar nenhuma origem de vídeo externa.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 script-src 'self' 'unsafe-inline';
+                 img-src 'self' data:;
+                 object-src 'none';
+                 base-uri 'self';
+                 form-action 'self' mailto:;">
+
+  <!-- Controla quanta informação de origem é enviada ao clicar em links externos -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  <!-- EDITE AQUI: título e descrição que aparecem no Google e na aba do navegador -->
+  <title>Danrlei Lucas | Segurança da Informação</title>
+  <meta name="description" content="Danrlei Lucas: Segurança da Informação. SOC, Cloud Security, Governança, ISO/IEC 27001, LGPD, análise de riscos e resposta a incidentes.">
+
+  <!--
+    FONTES (Google Fonts):
+    - Archivo → títulos gigantes (pesos Black expandidos, estilo FIAP)
+                e corpo do texto.
+    - JetBrains Mono → detalhes "de terminal" (tema cibersegurança).
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       1. VARIÁVEIS GLOBAIS (design tokens)
+       Alterar aqui muda o site inteiro de uma vez.
+       ============================================================ */
+    :root {
+      --preto: #0a0a0a;          /* fundo principal */
+      --preto-card: #131313;     /* fundo de cartões/blocos */
+      --magenta: #ED145B;        /* rosa FIAP — cor de destaque */
+      --branco: #f5f5f5;         /* texto principal */
+      --cinza: #9a9a9a;          /* texto secundário */
+      --linha: #262626;          /* bordas e divisórias sutis */
+
+      --fonte-display: "Archivo", sans-serif;    /* títulos */
+      --fonte-corpo: "Archivo", sans-serif;      /* parágrafos */
+      --fonte-mono: "JetBrains Mono", monospace; /* detalhes técnicos */
+    }
+
+    /* ============================================================
+       2. RESET BÁSICO
+       ============================================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; } /* rolagem suave no menu */
+
+    body {
+      background: var(--preto);
+      color: var(--branco);
+      font-family: var(--fonte-corpo);
+      line-height: 1.6;
+      overflow-x: hidden; /* evita vazamento horizontal dos títulos gigantes */
+    }
+
+    /* Acessibilidade: respeita quem desativa animações no sistema */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* Foco visível para navegação por teclado (acessibilidade) */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--magenta);
+      outline-offset: 3px;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ============================================================
+       3. CABEÇALHO / MENU
+       ============================================================ */
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.85);
+      -webkit-backdrop-filter: blur(10px); /* Safari/iPhone */
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--linha);
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-family: var(--fonte-mono);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--branco);
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .logo span { color: var(--magenta); }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+
+    .nav-links a {
+      color: var(--branco);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover { color: var(--magenta); }
+    /* Item do menu da seção que está na tela (classe via JS) */
+    .nav-links a.ativo { color: var(--magenta); }
+
+    .menu-btn {
+      display: none; /* só aparece no celular */
+      background: none;
+      border: none;
+      color: var(--branco);
+      font-size: 1.6rem;
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       4. HERO COM FUNDO ANIMADO (CHUVA DIGITAL / MATRIX)
+       O <canvas> fica atrás do conteúdo (z-index menor) e ocupa
+       toda a área do hero. O JavaScript desenha os caracteres
+       caindo. Um gradiente por cima garante a leitura do texto.
+       ============================================================ */
+    .hero {
+      min-height: 100vh;   /* reserva p/ navegadores antigos */
+      min-height: 100svh;  /* celular: ignora a barra de endereço */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 80px;
+      position: relative; /* referência para posicionar o canvas */
+      overflow: hidden;   /* corta o canvas nas bordas do hero */
+    }
+
+    /* O canvas da animação Matrix — camada de fundo */
+    #matrixCanvas {
+      position: absolute;
+      inset: 0;           /* estica para cobrir o hero inteiro */
+      width: 100%;
+      height: 100%;
+      z-index: 0;         /* atrás de tudo */
+      opacity: 0.5;       /* EDITE AQUI: intensidade da animação (0 a 1) */
+    }
+
+    /* Véu de gradiente sobre a animação: escurece as laterais e a
+       base para o texto do hero continuar 100% legível */
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(
+        to bottom,
+        rgba(10,10,10,0.55) 0%,
+        rgba(10,10,10,0.35) 45%,
+        rgba(10,10,10,0.95) 100%
+      );
+      pointer-events: none; /* não bloqueia cliques */
+    }
+
+    /* Conteúdo do hero fica acima do canvas e do gradiente */
+    .hero .container { position: relative; z-index: 2; }
+    .scroll-dica { z-index: 2; }
+
+    .terminal-line {
+      font-family: var(--fonte-mono);
+      color: var(--magenta);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    /* Cursor piscante do terminal */
+    .cursor {
+      display: inline-block;
+      width: 9px;
+      height: 18px;
+      background: var(--magenta);
+      vertical-align: middle;
+      animation: piscar 1s step-end infinite;
+    }
+    @keyframes piscar { 50% { opacity: 0; } }
+
+    .hero h1 {
+      font-family: var(--fonte-display);
+      font-stretch: 125%; /* fonte mais "larga", como a da FIAP */
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(3rem, 9vw, 7.5rem); /* tamanho fluido */
+      line-height: 0.95;
+      letter-spacing: -2px;
+    }
+
+    /* Segunda linha só com contorno magenta */
+    .hero h1 .destaque {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--magenta);
+    }
+
+    .hero .sub {
+      margin-top: 32px;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--cinza);
+      max-width: 680px;
+    }
+    .hero .sub strong { color: var(--branco); }
+
+    .hero-acoes { margin-top: 48px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-block;
+      padding: 16px 36px;
+      font-family: var(--fonte-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      border: 2px solid var(--magenta);
+    }
+    .btn-cheio { background: var(--magenta); color: var(--branco); }
+    .btn-cheio:hover {
+      background: transparent;
+      color: var(--magenta);
+      box-shadow: 0 0 24px rgba(237, 20, 91, 0.5); /* brilho magenta */
+    }
+    .btn-vazio { background: rgba(10,10,10,0.5); color: var(--branco); }
+    .btn-vazio:hover {
+      background: var(--magenta);
+      box-shadow: 0 0 24px rgba(237, 20, 91, 0.5);
+    }
+
+    /* ANIMAÇÃO AO APERTAR: o botão "afunda" levemente ao ser
+       clicado ou tocado — feedback tátil imediato para o usuário */
+    .btn:active { transform: scale(0.94); }
+
+    /* Efeito de "pulso" disparado pelo JavaScript no clique:
+       um anel magenta se expande a partir do botão e some */
+    .btn.pulsando { animation: pulso-btn 0.45s ease-out; }
+    @keyframes pulso-btn {
+      0%   { box-shadow: 0 0 0 0 rgba(237, 20, 91, 0.6); }
+      100% { box-shadow: 0 0 0 22px rgba(237, 20, 91, 0); }
+    }
+
+    /* Links de contato e chips também reagem ao toque */
+    .contato-item:active { transform: scale(0.985); }
+    .chip:active { transform: scale(0.94); border-color: var(--magenta); }
+
+    .scroll-dica {
+      position: absolute;
+      bottom: 32px;
+      left: 24px;
+      font-family: var(--fonte-mono);
+      font-size: 0.75rem;
+      color: var(--cinza);
+      letter-spacing: 3px;
+    }
+
+    /* ============================================================
+       5. SEÇÕES GENÉRICAS
+       ============================================================ */
+    section {
+      scroll-margin-top: 70px; /* compensa a barra fixa ao navegar pelo menu */
+      padding: 110px 0;
+      border-top: 1px solid var(--linha);
+      position: relative;  /* referência para o canvas de fundo */
+      overflow: hidden;    /* corta a animação nas bordas da seção */
+    }
+    .hero { border-top: none; }
+
+    /* Canvas de fundo animado de cada seção (efeito definido no
+       atributo data-efeito do HTML e desenhado pelo JavaScript) */
+    .fundo-secao {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;          /* atrás do conteúdo */
+      opacity: 0.22;       /* EDITE AQUI: intensidade (0 a 1) */
+      pointer-events: none;/* não bloqueia cliques */
+    }
+
+    /* Conteúdo das seções fica acima do canvas */
+    section .container { position: relative; z-index: 1; }
+
+    /* Etiqueta pequena acima do título (ex: 01 / SOBRE) */
+    .etiqueta {
+      font-family: var(--fonte-mono);
+      color: var(--magenta);
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .titulo-secao {
+      font-family: var(--fonte-display);
+      font-stretch: 125%;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(2rem, 5vw, 3.8rem);
+      line-height: 1;
+      margin-bottom: 56px;
+    }
+
+    /* Animação de entrada ao rolar (classe .visivel vem do JS).
+       IMPORTANTE (resiliência): o conteúdo só começa escondido se o
+       JavaScript estiver funcionando (classe js-ativo no <body>,
+       adicionada pelo próprio JS). Se o JS falhar ou for bloqueado,
+       o site mostra tudo normalmente — conteúdo nunca fica refém
+       de script. */
+    body.js-ativo .revelar {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    body.js-ativo .revelar.visivel { opacity: 1; transform: translateY(0); }
+
+    /* ============================================================
+       6. SEÇÃO SOBRE + NÚMEROS + ÁREAS DE ATUAÇÃO
+       ============================================================ */
+    .sobre-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 64px;
+      align-items: start;
+    }
+
+    .sobre-texto p {
+      color: var(--cinza);
+      margin-bottom: 20px;
+      font-size: 1.05rem;
+    }
+    .sobre-texto strong { color: var(--branco); }
+
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+    .stat-num {
+      font-family: var(--fonte-display);
+      font-stretch: 125%;
+      font-weight: 900;
+      font-size: clamp(2rem, 4vw, 2.9rem);
+      color: var(--magenta);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--cinza);
+      margin-top: 8px;
+    }
+
+    /* Chips: ferramentas e certificações */
+    .chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .chip {
+      font-family: var(--fonte-mono);
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      border: 1px solid var(--linha);
+      color: var(--branco);
+      transition: border-color 0.2s ease;
+    }
+    .chip:hover { border-color: var(--magenta); }
+    /* Variação destacada (usada nas certificações) */
+    .chip.destaque-chip { border-color: var(--magenta); color: var(--magenta); }
+
+    .subtitulo-bloco {
+      font-family: var(--fonte-mono);
+      color: var(--magenta);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 40px 0 8px;
+    }
+
+    /* Duas colunas "Segurança" x "Governança" dentro do Sobre */
+    .areas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 56px;
+    }
+    .area-card {
+      background: var(--preto-card);
+      border: 1px solid var(--linha);
+      padding: 32px;
+    }
+    .area-card h3 {
+      font-family: var(--fonte-display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+    }
+    .area-card h3 span { color: var(--magenta); font-family: var(--fonte-mono); margin-right: 8px; }
+    .area-card ul { list-style: none; }
+    .area-card li {
+      color: var(--cinza);
+      font-size: 0.95rem;
+      padding: 8px 0 8px 20px;
+      position: relative;
+      border-bottom: 1px solid var(--linha);
+    }
+    .area-card li:last-child { border-bottom: none; }
+    /* Setinha magenta antes de cada item da lista */
+    .area-card li::before {
+      content: ">";
+      color: var(--magenta);
+      font-family: var(--fonte-mono);
+      position: absolute;
+      left: 0;
+    }
+
+    /* ============================================================
+       7. SEÇÃO EXPERIÊNCIA (LINHA DO TEMPO)
+       ============================================================ */
+    .exp-item {
+      border-left: 2px solid var(--linha);
+      padding: 0 0 56px 40px;
+      position: relative;
+    }
+    .exp-item:last-child { padding-bottom: 0; }
+
+    /* Bolinha magenta na linha do tempo */
+    .exp-item::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 6px;
+      width: 12px;
+      height: 12px;
+      background: var(--magenta);
+      border-radius: 50%;
+    }
+
+    .exp-periodo {
+      font-family: var(--fonte-mono);
+      color: var(--magenta);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+    }
+
+    .exp-cargo {
+      font-family: var(--fonte-display);
+      font-weight: 800;
+      font-size: 1.4rem;
+      text-transform: uppercase;
+      margin: 8px 0 4px;
+    }
+
+    .exp-empresa { color: var(--cinza); font-size: 0.95rem; margin-bottom: 12px; }
+    .exp-desc { color: var(--cinza); max-width: 720px; }
+
+    /* ============================================================
+       8. SEÇÃO PROJETOS
+       ============================================================ */
+    .projetos-grid {
+      display: grid;
+      /* min(100%, 320px): em telas muito estreitas, o card usa a
+         largura disponível em vez de estourar para fora da tela */
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+      gap: 24px;
+    }
+
+    .projeto-card {
+      background: var(--preto-card);
+      border: 1px solid var(--linha);
+      padding: 36px;
+      transition: border-color 0.25s ease, transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .projeto-card:hover { border-color: var(--magenta); transform: translateY(-4px); }
+
+    .projeto-num {
+      font-family: var(--fonte-mono);
+      color: var(--magenta);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .projeto-card h3 {
+      font-family: var(--fonte-display);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    /* Período/empresa do projeto */
+    .projeto-meta {
+      font-family: var(--fonte-mono);
+      font-size: 0.72rem;
+      color: var(--cinza);
+      margin-bottom: 14px;
+    }
+
+    .projeto-card p { color: var(--cinza); font-size: 0.95rem; flex-grow: 1; }
+    .projeto-card p strong { color: var(--branco); }
+
+    .projeto-tags { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .projeto-tags span {
+      font-family: var(--fonte-mono);
+      font-size: 0.7rem;
+      color: var(--magenta);
+      border: 1px solid var(--magenta);
+      padding: 4px 10px;
+    }
+
+    /* ============================================================
+       9. SEÇÃO RECOMENDAÇÕES
+       ============================================================ */
+    .recs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      gap: 24px;
+    }
+
+    .rec-card {
+      background: var(--preto-card);
+      border: 1px solid var(--linha);
+      padding: 36px;
+      position: relative;
+    }
+
+    /* Aspas decorativas gigantes */
+    .rec-card::before {
+      content: "\201C";
+      font-family: var(--fonte-display);
+      font-size: 5rem;
+      color: var(--magenta);
+      position: absolute;
+      top: 8px;
+      left: 20px;
+      opacity: 0.35;
+      line-height: 1;
+    }
+
+    .rec-texto {
+      color: var(--cinza);
+      font-style: italic;
+      margin-bottom: 24px;
+      padding-top: 24px;
+      font-size: 0.95rem;
+    }
+
+    .rec-autor {
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .rec-funcao {
+      color: var(--magenta);
+      font-family: var(--fonte-mono);
+      font-size: 0.72rem;
+      margin-top: 4px;
+    }
+
+    /* "VER MAIS" DAS RECOMENDAÇÕES:
+       As recomendações a partir da 7ª têm a classe .rec-extra e
+       ficam escondidas. Quando o JavaScript adiciona .expandida na
+       grade (clique no botão), todas aparecem. */
+    .rec-extra { display: none; }
+    .recs-grid.expandida .rec-extra { display: block; }
+
+    /* Botão "Ver mais / Ver menos" centralizado abaixo da grade */
+    .btn-ver-mais {
+      display: block;
+      margin: 48px auto 0;
+      padding: 16px 48px;
+      background: transparent;
+      border: 2px solid var(--magenta);
+      color: var(--branco);
+      font-family: var(--fonte-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .btn-ver-mais:hover { background: var(--magenta); }
+    .btn-ver-mais:active { transform: scale(0.94); }
+
+    /* Link para ver todas as recomendações no LinkedIn */
+    .rec-link {
+      display: inline-block;
+      margin-top: 40px;
+      color: var(--magenta);
+      font-family: var(--fonte-mono);
+      font-size: 0.85rem;
+      text-decoration: none;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--magenta);
+      padding-bottom: 2px;
+    }
+    .rec-link:hover { color: var(--branco); border-color: var(--branco); }
+
+    /* ============================================================
+       10. SEÇÃO CONTATO
+       Links diretos (sem formulário): site estático não tem backend
+       para processar formulário com segurança — links diretos
+       eliminam essa superfície de ataque.
+       ============================================================ */
+    .contato-chamada {
+      font-family: var(--fonte-display);
+      font-stretch: 125%;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: clamp(2.4rem, 7vw, 5.5rem);
+      line-height: 1;
+      margin-bottom: 48px;
+    }
+    .contato-chamada .destaque {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--magenta);
+    }
+
+    .contato-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 560px;
+    }
+
+    .contato-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--linha);
+      text-decoration: none;
+      color: var(--branco);
+      transition: padding-left 0.25s ease, border-color 0.25s ease;
+    }
+    .contato-item:hover { padding-left: 12px; border-color: var(--magenta); }
+
+    .contato-item .rotulo {
+      font-family: var(--fonte-mono);
+      font-size: 0.75rem;
+      color: var(--magenta);
+      letter-spacing: 2px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .contato-item .valor {
+      font-weight: 600;
+      overflow-wrap: anywhere; /* e-mail longo quebra em vez de vazar */
+    }
+
+    /* O item de e-mail é um <button> (abre opções em vez de link
+       direto). Este reset faz o botão parecer igual aos demais
+       itens de contato. */
+    button.contato-item {
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--linha);
+      width: 100%;
+      font-family: inherit;
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+    }
+    button.contato-item:hover { border-color: var(--magenta); }
+
+    /* Painel com as opções de e-mail (Gmail / Outlook):
+       escondido por padrão; a classe .aberto (via JavaScript)
+       revela as opções. */
+    .email-opcoes {
+      display: none;
+      gap: 12px;
+      padding: 16px 0 20px;
+      border-bottom: 1px solid var(--linha);
+      flex-wrap: wrap;
+    }
+    .email-opcoes.aberto { display: flex; }
+
+    .email-opcoes a {
+      font-family: var(--fonte-mono);
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      color: var(--branco);
+      text-decoration: none;
+      border: 1px solid var(--magenta);
+      padding: 10px 20px;
+      transition: all 0.2s ease;
+    }
+    .email-opcoes a:hover { background: var(--magenta); }
+    .email-opcoes a:active { transform: scale(0.94); }
+
+    /* O "Copiar e-mail" é um <button>, mas com o mesmo visual dos
+       links do painel */
+    .email-opcoes button {
+      font-family: var(--fonte-mono);
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      color: var(--branco);
+      background: none;
+      border: 1px solid var(--magenta);
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .email-opcoes button:hover { background: var(--magenta); }
+    .email-opcoes button:active { transform: scale(0.94); }
+
+    /* Estado de sucesso: o botão fica verde por alguns segundos
+       após copiar (classe adicionada pelo JavaScript) */
+    .email-opcoes button.copiado {
+      border-color: #2ecc71;
+      color: #2ecc71;
+    }
+    .contato-item .seta { color: var(--magenta); font-size: 1.4rem; }
+
+    /* ============================================================
+       11. RODAPÉ
+       ============================================================ */
+    footer {
+      border-top: 1px solid var(--linha);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--cinza);
+      font-family: var(--fonte-mono);
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+    }
+    footer .magenta { color: var(--magenta); }
+
+    /* ============================================================
+       12. RESPONSIVIDADE (CELULAR)
+       ============================================================ */
+    @media (max-width: 768px) {
+      .menu-btn { display: block; }
+
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        flex-direction: column;
+        background: var(--preto);
+        border-bottom: 1px solid var(--linha);
+        padding: 24px;
+        gap: 20px;
+      }
+      .nav-links.aberto { display: flex; }
+
+      .sobre-grid { grid-template-columns: 1fr; gap: 48px; }
+      .areas-grid { grid-template-columns: 1fr; }
+
+      section { padding: 72px 0; }
+
+      /* Linha do tempo mais compacta no celular */
+      .exp-item { padding-left: 26px; padding-bottom: 44px; }
+
+      /* Cards com respiro menor em tela pequena */
+      .projeto-card, .rec-card, .area-card { padding: 26px; }
+
+      /* Números de destaque um pouco menores */
+      .stat-num { font-size: 1.8rem; }
+      .stats { gap: 24px; }
+    }
+
+    /* ============================================================
+       13. CELULARES PEQUENOS (até 480px)
+       Ajustes finos para telas bem estreitas.
+       ============================================================ */
+    @media (max-width: 480px) {
+      .container { padding: 0 18px; }
+
+      /* Título do hero sem espaçamento negativo (evita corte) */
+      .hero h1 { letter-spacing: 0; }
+
+      /* Contorno mais fino fica mais legível em tela pequena */
+      .hero h1 .destaque,
+      .contato-chamada .destaque { -webkit-text-stroke-width: 1.5px; }
+
+      /* Botões do hero ocupam a largura toda (mais fácil de tocar) */
+      .hero-acoes .btn {
+        width: 100%;
+        text-align: center;
+        padding: 16px 12px;
+      }
+
+      /* Estatísticas: número menor, sem quebrar "R$ 916 mil" feio */
+      .stat-num { font-size: 1.5rem; }
+
+      /* Opções de e-mail/telefone empilhadas em coluna */
+      .email-opcoes { flex-direction: column; }
+      .email-opcoes a, .email-opcoes button { text-align: center; }
+
+      /* Botão ver mais ocupa a largura toda */
+      .btn-ver-mais { width: 100%; padding: 16px 12px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       CABEÇALHO / NAVEGAÇÃO
+       ============================================================ -->
+  <header>
+    <nav class="nav" aria-label="Navegação principal">
+      <a href="#inicio" class="logo"><span>&gt;_</span> danrlei.sec</a>
+
+      <button class="menu-btn" id="menuBtn" aria-label="Abrir menu" aria-expanded="false">☰</button>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#inicio">Início</a></li>
+        <li><a href="#sobre">Sobre</a></li>
+        <li><a href="#experiencia">Experiência</a></li>
+        <li><a href="#projetos">Projetos</a></li>
+        <li><a href="#recomendacoes">Recomendações</a></li>
+        <li><a href="#contato">Contato</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ============================================================
+       SEÇÃO 1: HERO COM FUNDO ANIMADO
+       O <canvas> abaixo é onde o JavaScript desenha a "chuva
+       digital" (efeito Matrix) em magenta. aria-hidden="true"
+       avisa leitores de tela que é só decoração.
+       ============================================================ -->
+  <section class="hero" id="inicio">
+    <canvas id="matrixCanvas" aria-hidden="true"></canvas>
+
+    <div class="container">
+      <!-- Texto "digitado" pelo JavaScript, estilo terminal -->
+      <p class="terminal-line">
+        <span id="terminalTexto"></span><span class="cursor" aria-hidden="true"></span>
+      </p>
+
+      <h1>
+        Danrlei<br>
+        <span class="destaque">Lucas</span>
+      </h1>
+
+      <p class="sub">
+        <strong>Segurança da Informação</strong> · Operação de SOC ·
+        Cloud Security · Governança · ISO/IEC 27001 · LGPD ·
+        Análise de Riscos e Resposta a Incidentes.
+      </p>
+
+      <div class="hero-acoes">
+        <a href="#projetos" class="btn btn-cheio">Ver projetos</a>
+        <a href="#contato" class="btn btn-vazio">Fale comigo</a>
+      </div>
+    </div>
+
+    <span class="scroll-dica">SCROLL ↓</span>
+  </section>
+
+  <!-- ============================================================
+       SEÇÃO 2: SOBRE
+       ============================================================ -->
+  <section id="sobre">
+    <!-- Fundo animado desta seção (efeito: rede) — decorativo -->
+    <canvas class="fundo-secao" data-efeito="rede" aria-hidden="true"></canvas>
+    <div class="container">
+      <span class="etiqueta">01 / SOBRE</span>
+      <h2 class="titulo-secao">Quem sou eu</h2>
+
+      <div class="sobre-grid">
+        <!-- Coluna esquerda: apresentação -->
+        <div class="sobre-texto revelar">
+          <p>
+            Sou profissional de <strong>Segurança da Informação</strong>
+            com experiência em <strong>operação de SOC e governança</strong>.
+            Atualmente trabalho com análise de incidentes, monitoramento
+            contínuo e investigação de ameaças em ambientes cloud.
+          </p>
+          <p>
+            Minha visão é fortalecer a intersecção entre a
+            <strong>operação técnica</strong> e a
+            <strong>estratégia de governança</strong>: segurança que
+            funciona no dia a dia e que se sustenta em processos.
+          </p>
+
+          <!-- Ferramentas do dia a dia -->
+          <p class="subtitulo-bloco">// Ferramentas do dia a dia</p>
+          <div class="chips">
+            <span class="chip">CrowdStrike</span>
+            <span class="chip">Proofpoint</span>
+            <span class="chip">FortiAnalyzer</span>
+            <span class="chip">Trend Micro</span>
+            <span class="chip">AWS</span>
+            <span class="chip">Microsoft Security</span>
+            <span class="chip">Jira Service Management</span>
+          </div>
+
+          <!-- Certificações e formação -->
+          <p class="subtitulo-bloco">// Certificações</p>
+          <div class="chips">
+            <span class="chip destaque-chip">ISO/IEC 27001</span>
+            <span class="chip destaque-chip">COBIT 2019</span>
+            <span class="chip destaque-chip">ITIL 4</span>
+            <span class="chip destaque-chip">Microsoft SC-900</span>
+            <span class="chip">CompTIA Security+ (cursando)</span>
+          </div>
+        </div>
+
+        <!-- Coluna direita: números estilo FIAP -->
+        <!-- EDITE AQUI: ajuste os números quando quiser atualizar -->
+        <div class="stats revelar">
+          <div>
+            <div class="stat-num">5+</div>
+            <div class="stat-label">Anos em TI &amp; Segurança</div>
+          </div>
+          <div>
+            <div class="stat-num">4</div>
+            <div class="stat-label">Certificações</div>
+          </div>
+          <div>
+            <div class="stat-num">R$ 916 mil</div>
+            <div class="stat-label">Em ativos recuperados</div>
+          </div>
+          <div>
+            <div class="stat-num">25</div>
+            <div class="stat-label">Recomendações no LinkedIn</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Duas frentes de atuação: Segurança x Governança -->
+      <div class="areas-grid">
+        <div class="area-card revelar">
+          <h3><span>//</span>Segurança Operacional</h3>
+          <ul>
+            <li>Análise e detecção de ameaças em ambientes multi-cliente</li>
+            <li>Investigação e resposta a incidentes</li>
+            <li>Automação de fluxos operacionais de segurança</li>
+            <li>Gestão de credenciais privilegiadas e controle de acessos</li>
+          </ul>
+        </div>
+        <div class="area-card revelar">
+          <h3><span>//</span>Governança &amp; Processos</h3>
+          <ul>
+            <li>Implementação e manutenção de controles ISO/IEC 27001</li>
+            <li>Conformidade com LGPD e mapeamento de requisitos regulatórios</li>
+            <li>Auditorias de segurança, análise de riscos e reformulação de processos</li>
+            <li>Documentação de políticas e boas práticas alinhadas a COBIT e ITIL</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEÇÃO 3: EXPERIÊNCIA (LINHA DO TEMPO)
+       Dados extraídos do LinkedIn. O mais recente fica no topo.
+       ============================================================ -->
+  <section id="experiencia">
+    <!-- Fundo animado desta seção (efeito: radar) — decorativo -->
+    <canvas class="fundo-secao" data-efeito="radar" aria-hidden="true"></canvas>
+    <div class="container">
+      <span class="etiqueta">02 / EXPERIÊNCIA</span>
+      <h2 class="titulo-secao">Trajetória</h2>
+
+      <!--
+        NOTA: a experiência atual está sem o nome da empresa de
+        propósito (material público). Para incluir, basta trocar
+        o texto da linha .exp-empresa abaixo.
+      -->
+      <div class="exp-item revelar">
+        <span class="exp-periodo">JAN 2026 - ATUAL · SÃO PAULO · REMOTO</span>
+        <h3 class="exp-cargo">Analista de SOC</h3>
+        <p class="exp-empresa">Consultoria de Cibersegurança &amp; Cloud (AWS Partner)</p>
+        <p class="exp-desc">
+          Atuação no monitoramento, detecção e resposta a incidentes de
+          segurança, realizando triagem e investigação de alertas,
+          análise de logs e correlação de eventos em ambientes cloud e
+          on-premises, em operação multi-cliente.
+        </p>
+      </div>
+
+      <div class="exp-item revelar">
+        <span class="exp-periodo">AGO 2022 - JAN 2026 · SÃO PAULO</span>
+        <h3 class="exp-cargo">Analista de Suporte Jr.</h3>
+        <p class="exp-empresa">Multilaser Industrial S/A</p>
+        <p class="exp-desc">
+          Suporte técnico com envolvimento direto em rotinas de segurança
+          da informação: apoio ao monitoramento de alertas, análise de
+          incidentes e investigação de eventos em endpoints. Liderança de
+          projetos de processos, automação e integração SOC ↔ Jira.
+        </p>
+      </div>
+
+      <div class="exp-item revelar">
+        <span class="exp-periodo">FEV 2022 - AGO 2022 · MANAUS</span>
+        <h3 class="exp-cargo">Analista de Suporte de TI</h3>
+        <p class="exp-empresa">Atos</p>
+        <p class="exp-desc">
+          Suporte técnico de campo e helpdesk em ambiente corporativo,
+          com foco na sustentação de estações de trabalho, servidores e
+          sistemas empresariais.
+        </p>
+      </div>
+
+      <div class="exp-item revelar">
+        <span class="exp-periodo">NOV 2020 - FEV 2022 · MANAUS</span>
+        <h3 class="exp-cargo">Estagiário de TI</h3>
+        <p class="exp-empresa">Centro de Educação Tecnológica do Amazonas (CETAM)</p>
+        <p class="exp-desc">
+          Suporte técnico Nível 1 (N1) a usuários, em demandas de
+          hardware, software e rede. Apoio na manutenção da
+          infraestrutura de TI e troubleshooting de equipamentos.
+        </p>
+      </div>
+
+      <!-- Subtítulo que separa a carreira da formação acadêmica -->
+      <p class="subtitulo-bloco" style="margin-top: 64px; margin-bottom: 32px;">// FORMAÇÃO ACADÊMICA</p>
+
+      <div class="exp-item revelar">
+        <span class="exp-periodo">MAR 2025 - JAN 2026 · PÓS-GRADUAÇÃO</span>
+        <h3 class="exp-cargo">MBA em Gestão Estratégica e Liderança</h3>
+        <p class="exp-empresa">FIAP</p>
+      </div>
+
+      <div class="exp-item revelar">
+        <span class="exp-periodo">FEV 2020 - 2022 · GRADUAÇÃO</span>
+        <h3 class="exp-cargo">Tecnólogo em Segurança da Informação</h3>
+        <p class="exp-empresa">Martha Falcão Wyden</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEÇÃO 4: PROJETOS
+       Projetos reais do LinkedIn, com resultados mensuráveis.
+       ============================================================ -->
+  <section id="projetos">
+    <!-- Fundo animado desta seção (efeito: codigo) — decorativo -->
+    <canvas class="fundo-secao" data-efeito="codigo" aria-hidden="true"></canvas>
+    <div class="container">
+      <span class="etiqueta">03 / PROJETOS</span>
+      <h2 class="titulo-secao">O que já construí</h2>
+
+      <div class="projetos-grid">
+        <article class="projeto-card revelar">
+          <span class="projeto-num">// 01</span>
+          <h3>Integração SOC ↔ Jira e Processo de Detecção</h3>
+          <p class="projeto-meta">SET–OUT 2025 · MULTILASER</p>
+          <p>
+            Transformei um processo manual baseado em e-mail em um fluxo
+            automatizado com visibilidade em tempo real: cada detecção
+            relevante virava chamado com severidade, categoria, usuário,
+            hostname e detalhes do evento, com SLAs definidos para
+            triagem, investigação e encerramento. Criei métricas que
+            separavam alertas verdadeiros de ruído.
+            <strong>Resultado: redução significativa de falsos positivos
+            e time focado em ameaças reais ao negócio.</strong>
+          </p>
+          <div class="projeto-tags">
+            <span>SOC</span><span>JIRA</span><span>AUTOMAÇÃO</span><span>SLA</span><span>MÉTRICAS</span>
+          </div>
+        </article>
+
+        <article class="projeto-card revelar">
+          <span class="projeto-num">// 02</span>
+          <h3>Gestão de Processos: MicroTech</h3>
+          <p class="projeto-meta">SET 2024 – MAR 2025 · MULTILASER (SP · MG · AM)</p>
+          <p>
+            Mapeamento, padronização e documentação de todos os processos
+            do setor de Microinformática em conformidade com a
+            <strong>ISO 9001:2015</strong>: matriz de risco, ciclo PDCA e
+            gestão visual por Kanban com Jira e Confluence. Inclui a
+            criação do processo de onboarding de colaboradores com boas
+            práticas de segurança da informação, integrado ao RH em três
+            unidades.
+          </p>
+          <div class="projeto-tags">
+            <span>ISO 9001</span><span>PDCA</span><span>KANBAN</span><span>CONFLUENCE</span>
+          </div>
+        </article>
+
+        <article class="projeto-card revelar">
+          <span class="projeto-num">// 03</span>
+          <h3>Recuperação de Ativos de Desktop e Notebook</h3>
+          <p class="projeto-meta">FEV–DEZ 2024 · MULTILASER (MANAUS · EXTREMA)</p>
+          <p>
+            Criação de um fluxo estruturado de diagnóstico e manutenção
+            preventiva onde antes não havia processo formal, incluindo
+            uma sala exclusiva de recuperação de ativos em Manaus.
+            <strong>Resultado: R$ 228.521,79 recuperados em Manaus e
+            R$ 688.290,69 em Extrema</strong>, somando mais de R$ 916 mil
+            em ativos, com fluxo contínuo de manutenção implantado.
+          </p>
+          <div class="projeto-tags">
+            <span>GESTÃO DE ATIVOS</span><span>PROCESSOS</span><span>RESULTADO R$</span>
+          </div>
+        </article>
+
+        <article class="projeto-card revelar">
+          <span class="projeto-num">// 04</span>
+          <h3>Monitoramento de Redes com Zabbix</h3>
+          <p class="projeto-meta">ABR–JUL 2020 · CETAM</p>
+          <p>
+            Implantação de monitoramento de rede com Zabbix em escolas
+            técnicas do CETAM: instalação e configuração do servidor,
+            templates e scripts personalizados, agentes nos desktops das
+            salas de informática, dashboards de qualidade dos links de
+            internet e alertas automáticos para resposta imediata da
+            equipe de TI.
+          </p>
+          <div class="projeto-tags">
+            <span>ZABBIX</span><span>REDES</span><span>MONITORAMENTO</span><span>DASHBOARDS</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEÇÃO 5: RECOMENDAÇÕES
+       Depoimentos reais do LinkedIn. Para adicionar mais, copie
+       um bloco <article> inteiro e cole na grade.
+       ============================================================ -->
+  <section id="recomendacoes">
+    <!-- Fundo animado desta seção (efeito: particulas) — decorativo -->
+    <canvas class="fundo-secao" data-efeito="particulas" aria-hidden="true"></canvas>
+    <div class="container">
+      <span class="etiqueta">04 / RECOMENDAÇÕES</span>
+      <h2 class="titulo-secao">O que dizem sobre mim</h2>
+
+      <div class="recs-grid">
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            Tive a oportunidade de supervisionar Danrlei em um contexto
+            voltado à Segurança da Informação: um profissional
+            comprometido, analítico e altamente alinhado às boas práticas
+            de um ambiente de SOC. Demonstrou forte capacidade em
+            monitoramento contínuo de eventos, análise de logs e
+            identificação de incidentes, com atenção aos detalhes e senso
+            crítico apurado.
+          </p>
+          <p class="rec-autor">Estéfane Silva</p>
+          <p class="rec-funcao">// IAM Governance · Supervisionou Danrlei diretamente</p>
+        </article>
+
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            Trabalhei com Danrlei na operação de SOC e sempre observei
+            dedicação além das responsabilidades. Aprendeu com rapidez e
+            logo estava autônomo para analisar e responder a eventos de
+            segurança. Demonstrou ótimo entendimento dos fundamentos, base
+            para uma proatividade assertiva em melhorias da operação e
+            desenvolvimento de playbooks.
+          </p>
+          <p class="rec-autor">Danilo Santos</p>
+          <p class="rec-funcao">// Analista de Segurança Cibernética · Incident Response</p>
+        </article>
+
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            Danrlei participou comigo de uma implantação de software em
+            Manaus e teve um papel muito importante. Se capacitou
+            rapidamente no novo sistema, colocou a mão na massa desde o
+            início e ainda se preocupou em replicar o conhecimento para
+            os colegas. Hoje temos uma operação saudável, e sou muito
+            grato pela sua contribuição!
+          </p>
+          <p class="rec-autor">Victor Paschoalino</p>
+          <p class="rec-funcao">// Tech Lead · Grupo Multi</p>
+        </article>
+
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            Trabalhar com o Danrlei Lucas é ter a certeza de suporte
+            técnico de qualidade e parceria. Ele foi fundamental para o
+            time de TI, demonstrando uma proatividade rara e um domínio
+            técnico que se destaca. Não apenas resolve problemas, mas
+            compartilha conhecimento, elevando o nível de todos ao redor.
+            Recomendo-o sem hesitação!
+          </p>
+          <p class="rec-autor">Andre Cabral</p>
+          <p class="rec-funcao">// Engenheiro da Qualidade · SGQ</p>
+        </article>
+
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            Um parceiro de time confiável e extremamente colaborativo.
+            Sempre disposto a ajudar, compartilhar conhecimento e buscar
+            as melhores soluções. Sua postura profissional faz muita
+            diferença no dia a dia do time.
+          </p>
+          <p class="rec-autor">Frederico de Jesus Almeida</p>
+          <p class="rec-funcao">// SAP Basis &amp; Security · Cloud</p>
+        </article>
+
+        <article class="rec-card revelar">
+          <p class="rec-texto">
+            O Danrlei trata-se de um profissional extremamente
+            responsável, atento aos detalhes e comprometido. Sempre
+            demonstrou grande dedicação, entregando com qualidade e
+            dentro dos prazos. Pela sua ética, empenho e capacidade de
+            aprendizado, será um excelente acréscimo para qualquer
+            organização. Recomendo-o com total confiança.
+          </p>
+          <p class="rec-autor">Gustavo Trazzi Penaloza</p>
+          <p class="rec-funcao">// Analista de Testes/QA · Multilaser</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Trabalho com Danrlei por mais de um ano e posso dizer que é
+            um profissional muito comprometido e organizado. Sempre
+            entregou resultados de alta qualidade e teve um papel
+            fundamental em projetos importantes do time. Recomendo
+            fortemente seu trabalho.
+          </p>
+          <p class="rec-autor">Danilo Silva</p>
+          <p class="rec-funcao">// Analista de Projetos · Infraestrutura de TI</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei é um Excelente Profissional, com ótimos conhecimentos
+            e desempenho. Totalmente assíduo, responsável, sempre cumpria
+            os procedimentos da empresa. Atendia o setor de RH sempre com
+            respeito e dedicação em entregar excelentes resultados, e
+            está sempre disposto a ajudar os colegas de trabalho.
+          </p>
+          <p class="rec-autor">Joziane Oliveira</p>
+          <p class="rec-funcao">// Coordenadora de RH</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei é o tipo de profissional Hands On, está sempre pronto
+            para lhe atender e, mesmo quando não consegue de pronto
+            atendimento, ele busca a solução para a situação. Entende
+            bastante da área e faz seu trabalho de forma eficiente.
+          </p>
+          <p class="rec-autor">Sula Oliveira</p>
+          <p class="rec-funcao">// Strategic Sourcing · Purchasing Specialist</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei é daqueles profissionais que fazem a diferença:
+            determinado, ágil e sempre pronto para ajudar. Seu foco nos
+            detalhes e a dedicação para entregar com qualidade são
+            impressionantes. É assim que o conheço no dia a dia e tenho
+            muito orgulho de trabalhar ao seu lado!
+          </p>
+          <p class="rec-autor">Camila Sena</p>
+          <p class="rec-funcao">// Supervisora de Segurança do Trabalho</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei se destaca por sua notável capacidade de resolução de
+            problemas e busca por soluções eficientes. É proativo,
+            tomando a frente para guiar o time em situações desafiadoras
+            e garantindo que todos aprendam no processo. Lida com as
+            tarefas cotidianas com maestria, contribuindo
+            significativamente para a eficiência da equipe.
+          </p>
+          <p class="rec-autor">Gerson Silva</p>
+          <p class="rec-funcao">// Analista de Sistemas · Front-end</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Tive o privilégio de trabalhar ao lado do Danrlei e posso
+            afirmar com total segurança que é um profissional
+            extremamente competente, comprometido e proativo. Além do
+            conhecimento técnico, se destaca pela responsabilidade, pela
+            facilidade no trabalho em equipe e pela capacidade de
+            resolver problemas com agilidade.
+          </p>
+          <p class="rec-autor">Vitor Segantine</p>
+          <p class="rec-funcao">// Operações de TI e Infraestrutura · Respondia a Danrlei</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Tive a oportunidade de trabalhar lado a lado com Danrlei e
+            posso afirmar que ele é um excelente profissional e um colega
+            de equipe excepcional. Sua capacidade de se relacionar bem
+            com todos e sua disposição em ajudar sempre que necessário
+            fazem dele um grande parceiro. Recomendo-o de olhos fechados!
+          </p>
+          <p class="rec-autor">Thiago Ramalho</p>
+          <p class="rec-funcao">// Data Analyst · Power BI · Python · SQL</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            É raro encontrar talentos como o Danrlei. Tenho o prazer de
+            trabalhar com ele há anos na indústria, colaborando na equipe
+            de Tecnologia da Informação. Fiquei particularmente
+            impressionado com sua habilidade para lidar com os clientes
+            mais difíceis.
+          </p>
+          <p class="rec-autor">Rafael Torquato</p>
+          <p class="rec-funcao">// Senior Infrastructure Engineer · SRE &amp; DevOps</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Ótimo profissional, sempre de bom humor, tranquilo, faz a
+            mais do que suas obrigações, procurando sempre se atualizar
+            na área de informática realizando um trabalho com excelência.
+          </p>
+          <p class="rec-autor">Kevlan Betto</p>
+          <p class="rec-funcao">// Full Stack · Python · React · Node</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei is a very developed and competent professional, his
+            skills are of great value to our company, always prompt,
+            never hesitates to provide his services when requested.
+          </p>
+          <p class="rec-autor">Marcelo Matos</p>
+          <p class="rec-funcao">// Analista de Engenharia · WATTS / GrupoMulti</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei tem perfil diferenciado. Está sempre disposto a
+            ajudar e tem foco na entrega de qualidade. Tem clareza na
+            comunicação, e assertividade nas soluções propostas.
+          </p>
+          <p class="rec-autor">Reinaldo Plácido</p>
+          <p class="rec-funcao">// Líder Técnico</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Danrlei se destacou pela proatividade, desempenho, agilidade
+            e boas práticas de solução e segurança da informação,
+            receptivo ao feedback e continuamente disposto a aprender.
+            Sempre demonstrando um trabalho ético e de qualidade,
+            demonstrou excelência na empresa.
+          </p>
+          <p class="rec-autor">Isac Nascimento</p>
+          <p class="rec-funcao">// Engenheiro de Teste · MBA Gestão de Projetos</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            O Danrlei possui fortes competências técnicas e uma excelente
+            visão estratégica, possui qualidades fundamentais em qualquer
+            organização.
+          </p>
+          <p class="rec-autor">Débora Sousa</p>
+          <p class="rec-funcao">// Analista de Projetos Sênior</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Excelente profissional. Muito competente em suas atribuições,
+            sempre procurando desenvolver seu conhecimento e técnica
+            através de novas capacitações. Capacidade para trabalhar em
+            equipe de maneira harmoniosa, organização do ambiente de
+            trabalho e proatividade.
+          </p>
+          <p class="rec-autor">Gabriel Castillo</p>
+          <p class="rec-funcao">// Support Technician</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Educado, comprometido e com grande espírito de equipe. Essas
+            são umas das inúmeras qualidades que Danrlei possui.
+            Profissional com grande potencial a ser explorado.
+          </p>
+          <p class="rec-autor">Enderson Valente Teixeira</p>
+          <p class="rec-funcao">// Especialista SAP S/4HANA</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Profissional dedicado e responsável.
+          </p>
+          <p class="rec-autor">Jason Lanaro, MBA</p>
+          <p class="rec-funcao">// Supervisor de Suporte de TI · Supervisionou Danrlei</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Tive o prazer de trabalhar com o Danrlei que, mais do que um
+            profissional super competente e dedicado, é também uma pessoa
+            fenomenal. Prestativo e paciente com a equipe, ajudava a
+            todos, realiza as atividades e sempre tentava ir além,
+            idealizando e trazendo novas sugestões e ideias. Ótima
+            adição para qualquer time!!
+          </p>
+          <p class="rec-autor">Lúcio Matheus Ferreira do Rêgo</p>
+          <p class="rec-funcao">// SIG · Supervisionou Danrlei diretamente</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            O Danrlei é um técnico em informática comprometido, proativo
+            e em constante evolução! Tem muita facilidade em aprender e
+            está sempre disposto a novos desafios. Destaca-se em
+            atendimento ao usuário pois é muito educado e atencioso.
+            Recomendo pois acredito que ele possa agregar valor em
+            qualquer empresa em que ele passar.
+          </p>
+          <p class="rec-autor">Lívia Cunha</p>
+          <p class="rec-funcao">// Profissional de Tecnologia da Informação</p>
+        </article>
+
+        <article class="rec-card revelar rec-extra">
+          <p class="rec-texto">
+            Descrevo Danrlei como um excelente profissional, se adapta
+            facilmente ao ambiente de trabalho, gosta de estar envolvido
+            diretamente nas atividades da equipe, tem facilidade em
+            aprender. Uma pessoa de boa índole, com bastante ética, e
+            vontade de crescer profissionalmente.
+          </p>
+          <p class="rec-autor">Marcilene da Silva Borges</p>
+          <p class="rec-funcao">// Supervisionou Danrlei diretamente</p>
+        </article>
+      </div>
+
+      <!-- Botão que revela as recomendações escondidas (.rec-extra) -->
+      <button type="button" class="btn-ver-mais" id="btnVerMais">
+        Ver mais recomendações +
+      </button>
+
+      <!-- Link para a página de recomendações no LinkedIn -->
+      <a href="https://www.linkedin.com/in/danrleylucas/details/recommendations/"
+         target="_blank" rel="noopener noreferrer" class="rec-link">
+        VER TODAS AS RECOMENDAÇÕES NO LINKEDIN →
+      </a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       SEÇÃO 6: CONTATO
+       rel="noopener noreferrer" nos links externos = segurança:
+       impede que a aba aberta controle esta página (tabnabbing).
+       ============================================================ -->
+  <section id="contato">
+    <!-- Fundo animado desta seção (efeito: grade) — decorativo -->
+    <canvas class="fundo-secao" data-efeito="grade" aria-hidden="true"></canvas>
+    <div class="container">
+      <span class="etiqueta">05 / CONTATO</span>
+      <h2 class="contato-chamada">
+        Vamos<br>
+        <span class="destaque">conversar?</span>
+      </h2>
+
+      <div class="contato-links">
+        <a href="https://www.linkedin.com/in/danrleylucas/" target="_blank"
+           rel="noopener noreferrer" class="contato-item">
+          <span>
+            <span class="rotulo">LINKEDIN</span>
+            <span class="valor">/in/danrleylucas</span>
+          </span>
+          <span class="seta">→</span>
+        </a>
+
+        <!-- E-MAIL: clique abre as opções Gmail / Outlook abaixo.
+             Os links levam direto à tela de "escrever e-mail" de
+             cada serviço, já com o destinatário preenchido. -->
+        <button type="button" class="contato-item" id="btnEmail"
+                aria-expanded="false" aria-controls="emailOpcoes">
+          <span>
+            <span class="rotulo">E-MAIL</span>
+            <span class="valor">danrleyanajosas@gmail.com</span>
+          </span>
+          <span class="seta">+</span>
+        </button>
+
+        <div class="email-opcoes" id="emailOpcoes">
+          <a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=danrleyanajosas@gmail.com"
+             target="_blank" rel="noopener noreferrer">
+            ✉ ABRIR NO GMAIL
+          </a>
+          <a href="https://outlook.live.com/mail/0/deeplink/compose?to=danrleyanajosas@gmail.com"
+             target="_blank" rel="noopener noreferrer">
+            ✉ ABRIR NO OUTLOOK
+          </a>
+          <!-- Copia o endereço para a área de transferência
+               (o JavaScript troca o texto para "COPIADO ✓") -->
+          <button type="button" id="btnCopiarEmail"
+                  data-email="danrleyanajosas@gmail.com">
+            ⧉ COPIAR E-MAIL
+          </button>
+        </div>
+
+        <!-- TELEFONE: clique abre as opções WhatsApp / Ligar.
+             - WhatsApp: wa.me abre a conversa direto, já com uma
+               mensagem inicial pré-preenchida (texto após ?text=,
+               codificado em formato de URL)
+             - Ligar: o link tel: abre o teclado de chamada do
+               celular com o número pronto para discar -->
+        <button type="button" class="contato-item" id="btnTelefone"
+                aria-expanded="false" aria-controls="telefoneOpcoes">
+          <span>
+            <span class="rotulo">TELEFONE</span>
+            <span class="valor">+55 92 98806-8014</span>
+          </span>
+          <span class="seta">+</span>
+        </button>
+
+        <div class="email-opcoes" id="telefoneOpcoes">
+          <a href="https://wa.me/5592988068014?text=Ol%C3%A1%20Danrlei!%20Vi%20seu%20portf%C3%B3lio%20e%20gostaria%20de%20conversar."
+             target="_blank" rel="noopener noreferrer">
+            ✆ ABRIR NO WHATSAPP
+          </a>
+          <a href="tel:+5592988068014">
+            ☎ LIGAR AGORA
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       RODAPÉ
+       ============================================================ -->
+  <footer>
+    <p>&copy; 2026 Danrlei Lucas <span class="magenta">//</span> Segurança da Informação <span class="magenta">//</span> Feito com segurança em mente</p>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       1. Proteção anti-clickjacking (segurança)
+       2. Animação Matrix (chuva digital) no fundo do hero
+       3. Menu mobile
+       4. Efeito de digitação no terminal
+       5. Animações de entrada ao rolar
+       ============================================================ -->
+  <script>
+    "use strict"; // Modo estrito: evita erros silenciosos no JS
+
+    /* ============================================================
+       ARQUITETURA DE RESILIÊNCIA
+       Cada funcionalidade do site roda dentro de rodarSeguro():
+       se uma delas falhar (navegador antigo, ambiente restrito,
+       recurso indisponível), o erro é registrado no console e as
+       DEMAIS continuam funcionando. Antes, um único erro derrubava
+       todos os botões definidos depois dele.
+
+       A ordem também importa: primeiro o essencial (menu, botões,
+       conteúdo), por último o decorativo (animações). Assim, mesmo
+       no pior cenário, o site continua 100% utilizável.
+       ============================================================ */
+    function rodarSeguro(nome, funcao) {
+      try {
+        funcao();
+      } catch (erro) {
+        console.warn("Recurso '" + nome + "' desativado:", erro.message);
+      }
+    }
+
+    /* Preferência do usuário por menos animação (acessibilidade) */
+    var reduzirMovimento = false;
+    rodarSeguro("preferencia de movimento", function () {
+      reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    });
+
+    /* ------------------------------------------------------------
+       0. SEGURANÇA: PROTEÇÃO ANTI-CLICKJACKING
+       Impede que o site seja carregado dentro de um <iframe> de
+       outro site (roubo de cliques). Quando o iframe é de outra
+       origem, o navegador bloqueia window.top e lança erro — o
+       rodarSeguro captura e a página segue normal. A proteção
+       principal deve vir do header do servidor (X-Frame-Options).
+       ------------------------------------------------------------ */
+    rodarSeguro("anti-clickjacking", function () {
+      if (window.top !== window.self) {
+        window.top.location = window.self.location;
+      }
+    });
+
+    /* ------------------------------------------------------------
+       1. MARCA QUE O JS ESTÁ ATIVO
+       Só a partir daqui o CSS esconde os elementos .revelar para
+       animá-los. Se o JS não rodar, nada fica escondido.
+       ------------------------------------------------------------ */
+    rodarSeguro("js-ativo", function () {
+      document.body.classList.add("js-ativo");
+    });
+
+    /* ============================================================
+       BLOCO A — ESSENCIAL (botões e navegação)
+       Registrado ANTES de qualquer animação.
+       ============================================================ */
+
+    /* ------------------------------------------------------------
+       2. MENU MOBILE (botão hambúrguer)
+       ------------------------------------------------------------ */
+    rodarSeguro("menu mobile", function () {
+      var menuBtn = document.getElementById("menuBtn");
+      var navLinks = document.getElementById("navLinks");
+
+      menuBtn.addEventListener("click", function () {
+        var aberto = navLinks.classList.toggle("aberto");
+        menuBtn.setAttribute("aria-expanded", aberto ? "true" : "false");
+      });
+
+      // Fecha o menu ao clicar em qualquer link
+      navLinks.querySelectorAll("a").forEach(function (link) {
+        link.addEventListener("click", function () {
+          navLinks.classList.remove("aberto");
+          menuBtn.setAttribute("aria-expanded", "false");
+        });
+      });
+    });
+
+    /* ------------------------------------------------------------
+       3. NAVEGAÇÃO DO MENU (Início, Sobre, Experiência...)
+       O clique é tratado por JavaScript (scrollIntoView), que
+       funciona mesmo em previews/iframes onde a âncora padrão
+       falha. O scroll-margin-top do CSS compensa a barra fixa.
+       ------------------------------------------------------------ */
+    rodarSeguro("navegacao do menu", function () {
+      document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+        link.addEventListener("click", function (evento) {
+          var destino = document.querySelector(link.getAttribute("href"));
+          if (destino) {
+            evento.preventDefault();
+            destino.scrollIntoView({
+              behavior: reduzirMovimento ? "auto" : "smooth"
+            });
+          }
+        });
+      });
+    });
+
+    /* ------------------------------------------------------------
+       4. "VER MAIS" DAS RECOMENDAÇÕES
+       Alterna a classe .expandida na grade: o CSS revela/esconde
+       os cards extras (.rec-extra). O texto do botão acompanha.
+       ------------------------------------------------------------ */
+    rodarSeguro("ver mais recomendacoes", function () {
+      var btnVerMais = document.getElementById("btnVerMais");
+      var gradeRecs = document.querySelector(".recs-grid");
+
+      btnVerMais.addEventListener("click", function () {
+        var expandiu = gradeRecs.classList.toggle("expandida");
+        btnVerMais.textContent = expandiu
+          ? "Ver menos recomendações −"
+          : "Ver mais recomendações +";
+        // Ao recolher, volta ao início da seção (evita "cair" no
+        // meio da página)
+        if (!expandiu) {
+          document.getElementById("recomendacoes").scrollIntoView({
+            behavior: reduzirMovimento ? "auto" : "smooth"
+          });
+        }
+      });
+    });
+
+    /* ------------------------------------------------------------
+       5. OPÇÕES DE E-MAIL (GMAIL / OUTLOOK)
+       O item de e-mail é um botão que abre/fecha o painel com as
+       duas opções. aria-expanded informa leitores de tela.
+       ------------------------------------------------------------ */
+    rodarSeguro("opcoes de e-mail", function () {
+      var btnEmail = document.getElementById("btnEmail");
+      var emailOpcoes = document.getElementById("emailOpcoes");
+
+      btnEmail.addEventListener("click", function () {
+        var aberto = emailOpcoes.classList.toggle("aberto");
+        btnEmail.setAttribute("aria-expanded", aberto ? "true" : "false");
+        btnEmail.querySelector(".seta").textContent = aberto ? "−" : "+";
+      });
+    });
+
+    /* ------------------------------------------------------------
+       5b. OPÇÕES DE TELEFONE (WHATSAPP / LIGAR)
+       Mesmo comportamento do e-mail: o item abre/fecha o painel
+       com as duas opções.
+       ------------------------------------------------------------ */
+    rodarSeguro("opcoes de telefone", function () {
+      var btnTelefone = document.getElementById("btnTelefone");
+      var telefoneOpcoes = document.getElementById("telefoneOpcoes");
+
+      btnTelefone.addEventListener("click", function () {
+        var aberto = telefoneOpcoes.classList.toggle("aberto");
+        btnTelefone.setAttribute("aria-expanded", aberto ? "true" : "false");
+        btnTelefone.querySelector(".seta").textContent = aberto ? "−" : "+";
+      });
+    });
+
+    /* ------------------------------------------------------------
+       5c. COPIAR E-MAIL
+       Copia o endereço para a área de transferência. Tenta primeiro
+       a API moderna (navigator.clipboard, exige contexto seguro/
+       HTTPS); se não estiver disponível, usa o plano B com um campo
+       de texto temporário. Ao copiar, o botão mostra "COPIADO ✓"
+       por 2 segundos.
+       ------------------------------------------------------------ */
+    rodarSeguro("copiar e-mail", function () {
+      var btnCopiar = document.getElementById("btnCopiarEmail");
+      var textoOriginal = btnCopiar.textContent;
+
+      function avisarCopiado() {
+        btnCopiar.textContent = "COPIADO ✓";
+        btnCopiar.classList.add("copiado");
+        setTimeout(function () {
+          btnCopiar.textContent = textoOriginal;
+          btnCopiar.classList.remove("copiado");
+        }, 2000);
+      }
+
+      // Plano B para ambientes sem navigator.clipboard:
+      // cria um campo invisível, seleciona e copia
+      function copiarPlanoB(texto) {
+        var campo = document.createElement("textarea");
+        campo.value = texto;
+        campo.setAttribute("readonly", ""); // evita abrir teclado no celular
+        campo.style.position = "absolute";
+        campo.style.left = "-9999px";       // fora da tela
+        document.body.appendChild(campo);
+        campo.select();
+        document.execCommand("copy");
+        document.body.removeChild(campo);
+      }
+
+      btnCopiar.addEventListener("click", function () {
+        var email = btnCopiar.dataset.email;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(email)
+            .then(avisarCopiado)
+            .catch(function () { copiarPlanoB(email); avisarCopiado(); });
+        } else {
+          copiarPlanoB(email);
+          avisarCopiado();
+        }
+      });
+    });
+
+    /* ------------------------------------------------------------
+       6. PULSO NOS BOTÕES AO APERTAR
+       Ao clicar, a classe .pulsando dispara o anel magenta que se
+       expande (definido no CSS) e é removida ao fim da animação.
+       ------------------------------------------------------------ */
+    rodarSeguro("pulso dos botoes", function () {
+      document.querySelectorAll(".btn").forEach(function (botao) {
+        botao.addEventListener("click", function () {
+          botao.classList.remove("pulsando");
+          void botao.offsetWidth; // força o navegador a reiniciar a animação
+          botao.classList.add("pulsando");
+        });
+        botao.addEventListener("animationend", function () {
+          botao.classList.remove("pulsando");
+        });
+      });
+    });
+
+    /* ============================================================
+       BLOCO B — CONTEÚDO (revelação ao rolar)
+       ============================================================ */
+
+    /* ------------------------------------------------------------
+       7. ANIMAÇÕES DE ENTRADA AO ROLAR
+       IntersectionObserver adiciona .visivel quando o elemento
+       entra na tela. PLANO B: se o navegador não tiver
+       IntersectionObserver, todos os elementos são revelados de
+       uma vez — o conteúdo NUNCA fica escondido.
+       ------------------------------------------------------------ */
+    rodarSeguro("revelacao ao rolar", function () {
+      var elementos = document.querySelectorAll(".revelar");
+
+      if (typeof IntersectionObserver === "undefined" || reduzirMovimento) {
+        // Plano B: revela tudo imediatamente
+        elementos.forEach(function (el) { el.classList.add("visivel"); });
+        return;
+      }
+
+      var observador = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (entrada) {
+          if (entrada.isIntersecting) {
+            entrada.target.classList.add("visivel");
+            observador.unobserve(entrada.target); // anima só 1 vez
+          }
+        });
+      }, { threshold: 0.15 });
+
+      elementos.forEach(function (el) { observador.observe(el); });
+    });
+
+    /* ------------------------------------------------------------
+       8. EFEITO DE TERMINAL (DIGITAÇÃO)
+       Usa textContent (NUNCA innerHTML): textContent trata tudo
+       como texto puro, impedindo injeção de HTML/scripts (XSS).
+       ------------------------------------------------------------ */
+    rodarSeguro("terminal do hero", function () {
+      var terminalTexto = document.getElementById("terminalTexto");
+      var frase = "danrlei@security:~$ whoami";
+      var indice = 0;
+
+      function digitar() {
+        if (indice < frase.length) {
+          terminalTexto.textContent += frase.charAt(indice);
+          indice++;
+          setTimeout(digitar, 65); // 65ms por letra
+        }
+      }
+
+      if (reduzirMovimento) {
+        terminalTexto.textContent = frase; // mostra tudo de uma vez
+      } else {
+        digitar();
+      }
+    });
+
+    /* ------------------------------------------------------------
+       8b. MENU ATIVO (SCROLLSPY)
+       Destaca no menu o link da seção que está na tela, para o
+       visitante sempre saber onde está. Usa IntersectionObserver
+       com uma "janela" central da tela (rootMargin): a seção que
+       cruza essa janela vira a ativa. Sem IntersectionObserver,
+       o recurso simplesmente não ativa (é só um detalhe visual).
+       ------------------------------------------------------------ */
+    rodarSeguro("menu ativo", function () {
+      if (typeof IntersectionObserver === "undefined") return;
+
+      var linksMenu = document.querySelectorAll(".nav-links a");
+
+      var observadorMenu = new IntersectionObserver(function (entradas) {
+        entradas.forEach(function (entrada) {
+          if (!entrada.isIntersecting) return;
+          var id = entrada.target.id;
+          linksMenu.forEach(function (link) {
+            // Ativa o link cujo destino é a seção visível
+            link.classList.toggle("ativo", link.getAttribute("href") === "#" + id);
+          });
+        });
+      }, {
+        // "Janela" no meio da tela: 30% do topo e 55% de baixo são
+        // ignorados — evita duas seções ativas ao mesmo tempo
+        rootMargin: "-30% 0px -55% 0px"
+      });
+
+      document.querySelectorAll("section[id]").forEach(function (sec) {
+        observadorMenu.observe(sec);
+      });
+    });
+
+    /* ============================================================
+       BLOCO C — DECORATIVO (animações de fundo)
+       Por último de propósito: se algo falhar aqui, os botões e o
+       conteúdo acima já estão funcionando.
+       ============================================================ */
+
+    /* ------------------------------------------------------------
+       9. ANIMAÇÃO MATRIX (CHUVA DIGITAL) NO HERO
+       - O canvas é dividido em colunas do tamanho de um caractere.
+       - Cada coluna tem uma "gota" que desce desenhando caracteres
+         aleatórios (katakana + números + símbolos).
+       - A cada quadro, um retângulo preto SEMITRANSPARENTE é
+         pintado sobre tudo: é isso que cria o rastro esmaecido.
+       - Ao passar do fim da tela, a gota volta ao topo em momento
+         aleatório, dessincronizando as colunas.
+       Segurança: roda 100% local, sem nenhum recurso externo.
+       ------------------------------------------------------------ */
+    rodarSeguro("animacao matrix", function () {
+      var canvas = document.getElementById("matrixCanvas");
+      var ctx = canvas.getContext("2d");
+
+      if (reduzirMovimento) {
+        canvas.style.display = "none";
+        return;
+      }
+
+      var CARACTERES = "アイウエオカキクケコサシスセソ0123456789$#@%&<>/\\|=+*";
+      var TAMANHO_FONTE = 16;
+      var colunas = 0;
+      var gotas = [];
+
+      function redimensionarCanvas() {
+        var hero = canvas.parentElement;
+        canvas.width = hero.offsetWidth;
+        canvas.height = hero.offsetHeight;
+        colunas = Math.floor(canvas.width / TAMANHO_FONTE);
+        gotas = [];
+        for (var i = 0; i < colunas; i++) {
+          gotas.push(Math.floor(Math.random() * (canvas.height / TAMANHO_FONTE)));
+        }
+      }
+
+      function desenharMatrix() {
+        // Véu preto translúcido = rastro que vai apagando
+        ctx.fillStyle = "rgba(10, 10, 10, 0.08)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = TAMANHO_FONTE + "px monospace";
+
+        for (var i = 0; i < colunas; i++) {
+          var char = CARACTERES.charAt(Math.floor(Math.random() * CARACTERES.length));
+          var x = i * TAMANHO_FONTE;
+          var y = gotas[i] * TAMANHO_FONTE;
+          // 10% de chance de "faísca" branca; o resto em magenta
+          ctx.fillStyle = Math.random() > 0.9 ? "#ffffff" : "#ED145B";
+          ctx.fillText(char, x, y);
+          if (y > canvas.height && Math.random() > 0.975) gotas[i] = 0;
+          gotas[i]++;
+        }
+      }
+
+      redimensionarCanvas();
+      setInterval(desenharMatrix, 50); // ~20 quadros por segundo
+      window.addEventListener("resize", redimensionarCanvas);
+    });
+
+    /* ------------------------------------------------------------
+       10. ANIMAÇÕES DE FUNDO DAS SEÇÕES
+       Cada seção tem um <canvas class="fundo-secao" data-efeito>.
+       Efeitos (tema segurança):
+         rede       → nós conectados (topologia de rede)
+         radar      → varredura circular (monitoramento SOC)
+         codigo     → bits 0/1 caindo (automação/dados)
+         particulas → pontos flutuando (pessoas/conexões)
+         grade      → grade pulsante (painel de datacenter)
+       Só a seção VISÍVEL é animada (economia de processador).
+       ------------------------------------------------------------ */
+    rodarSeguro("animacoes das secoes", function () {
+      if (reduzirMovimento) {
+        document.querySelectorAll(".fundo-secao").forEach(function (cv) {
+          cv.style.display = "none";
+        });
+        return;
+      }
+
+      // Cor magenta com transparência variável
+      function magenta(alpha) { return "rgba(237, 20, 91, " + alpha + ")"; }
+
+      /* EFEITO "REDE": pontos em movimento; os próximos se conectam */
+      function criarRede(canvas, ctx) {
+        var nos = [];
+        function iniciar() {
+          var qtd = Math.max(20, Math.floor(canvas.width / 60));
+          nos = [];
+          for (var i = 0; i < qtd; i++) {
+            nos.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: (Math.random() - 0.5) * 0.5
+            });
+          }
+        }
+        function desenhar() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          nos.forEach(function (n) {
+            n.x += n.vx; n.y += n.vy;
+            if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+            if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+            ctx.fillStyle = magenta(0.8);
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          // Linha entre nós a menos de 130px um do outro
+          for (var i = 0; i < nos.length; i++) {
+            for (var j = i + 1; j < nos.length; j++) {
+              var dist = Math.hypot(nos[i].x - nos[j].x, nos[i].y - nos[j].y);
+              if (dist < 130) {
+                ctx.strokeStyle = magenta(0.5 * (1 - dist / 130));
+                ctx.beginPath();
+                ctx.moveTo(nos[i].x, nos[i].y);
+                ctx.lineTo(nos[j].x, nos[j].y);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+        return { iniciar: iniciar, desenhar: desenhar };
+      }
+
+      /* EFEITO "RADAR": feixe girando sobre círculos concêntricos */
+      function criarRadar(canvas, ctx) {
+        var angulo = 0;
+        function iniciar() {}
+        function desenhar() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          var cx = canvas.width * 0.8;
+          var cy = canvas.height * 0.5;
+          var raio = Math.max(canvas.width, canvas.height) * 0.45;
+
+          ctx.strokeStyle = magenta(0.25);
+          for (var r = raio / 4; r <= raio; r += raio / 4) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.beginPath();
+          ctx.moveTo(cx - raio, cy); ctx.lineTo(cx + raio, cy);
+          ctx.moveTo(cx, cy - raio); ctx.lineTo(cx, cy + raio);
+          ctx.stroke();
+
+          // Feixe com gradiente cônico (com alternativa para
+          // navegadores que não suportam)
+          if (ctx.createConicGradient) {
+            var grad = ctx.createConicGradient(angulo, cx, cy);
+            grad.addColorStop(0, magenta(0.55));
+            grad.addColorStop(0.12, magenta(0));
+            grad.addColorStop(1, magenta(0));
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, raio, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.strokeStyle = magenta(0.6);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(angulo) * raio, cy + Math.sin(angulo) * raio);
+            ctx.stroke();
+          }
+          angulo += 0.012;
+        }
+        return { iniciar: iniciar, desenhar: desenhar };
+      }
+
+      /* EFEITO "CÓDIGO": bits 0/1 caindo esparsos (Matrix leve) */
+      function criarCodigo(canvas, ctx) {
+        var colunasBits = [];
+        var ESPACO = 34;
+        function iniciar() {
+          var qtd = Math.floor(canvas.width / ESPACO);
+          colunasBits = [];
+          for (var i = 0; i < qtd; i++) {
+            colunasBits.push({
+              y: Math.random() * canvas.height,
+              vel: 0.6 + Math.random() * 1.2
+            });
+          }
+        }
+        function desenhar() {
+          ctx.fillStyle = "rgba(10, 10, 10, 0.12)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.font = "14px monospace";
+          colunasBits.forEach(function (col, i) {
+            ctx.fillStyle = magenta(0.85);
+            ctx.fillText(Math.random() > 0.5 ? "1" : "0", i * ESPACO, col.y);
+            col.y += col.vel * 3;
+            if (col.y > canvas.height) col.y = -10;
+          });
+        }
+        return { iniciar: iniciar, desenhar: desenhar };
+      }
+
+      /* EFEITO "PARTÍCULAS": pontos subindo com brilho pulsante */
+      function criarParticulas(canvas, ctx) {
+        var pontos = [];
+        function iniciar() {
+          var qtd = Math.max(25, Math.floor(canvas.width / 40));
+          pontos = [];
+          for (var i = 0; i < qtd; i++) {
+            pontos.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              raio: 1 + Math.random() * 2,
+              vel: 0.15 + Math.random() * 0.4,
+              fase: Math.random() * Math.PI * 2
+            });
+          }
+        }
+        function desenhar() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          pontos.forEach(function (p) {
+            p.y -= p.vel;
+            p.fase += 0.03;
+            if (p.y < -5) {
+              p.y = canvas.height + 5;
+              p.x = Math.random() * canvas.width;
+            }
+            var brilho = 0.35 + 0.45 * Math.abs(Math.sin(p.fase));
+            ctx.fillStyle = magenta(brilho);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.raio, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+        return { iniciar: iniciar, desenhar: desenhar };
+      }
+
+      /* EFEITO "GRADE": pontos acendem em onda diagonal */
+      function criarGrade(canvas, ctx) {
+        var tempo = 0;
+        var PASSO = 42;
+        function iniciar() {}
+        function desenhar() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          tempo += 0.03;
+          for (var x = PASSO / 2; x < canvas.width; x += PASSO) {
+            for (var y = PASSO / 2; y < canvas.height; y += PASSO) {
+              var onda = Math.sin(tempo + x * 0.012 + y * 0.012);
+              ctx.fillStyle = magenta(0.12 + 0.5 * Math.max(0, onda));
+              ctx.fillRect(x, y, 2.5, 2.5);
+            }
+          }
+        }
+        return { iniciar: iniciar, desenhar: desenhar };
+      }
+
+      var FABRICA_EFEITOS = {
+        rede: criarRede,
+        radar: criarRadar,
+        codigo: criarCodigo,
+        particulas: criarParticulas,
+        grade: criarGrade
+      };
+
+      var animacoesSecoes = [];
+      document.querySelectorAll(".fundo-secao").forEach(function (cv) {
+        var fabrica = FABRICA_EFEITOS[cv.dataset.efeito];
+        if (!fabrica) return;
+
+        var efeito = fabrica(cv, cv.getContext("2d"));
+
+        function redimensionar() {
+          cv.width = cv.parentElement.offsetWidth;
+          cv.height = cv.parentElement.offsetHeight;
+          efeito.iniciar();
+        }
+        redimensionar();
+        window.addEventListener("resize", redimensionar);
+
+        // Sem IntersectionObserver, anima sempre (plano B);
+        // com ele, começa pausada até a seção aparecer
+        animacoesSecoes.push({
+          canvas: cv,
+          efeito: efeito,
+          visivel: typeof IntersectionObserver === "undefined"
+        });
+      });
+
+      // Observa quais seções estão na tela: só elas são animadas
+      if (typeof IntersectionObserver !== "undefined") {
+        var observadorSecoes = new IntersectionObserver(function (entradas) {
+          entradas.forEach(function (entrada) {
+            animacoesSecoes.forEach(function (a) {
+              if (a.canvas === entrada.target) a.visivel = entrada.isIntersecting;
+            });
+          });
+        }, { threshold: 0.05 });
+
+        animacoesSecoes.forEach(function (a) {
+          observadorSecoes.observe(a.canvas);
+        });
+      }
+
+      // Loop único: desenha apenas as seções visíveis
+      function loopSecoes() {
+        animacoesSecoes.forEach(function (a) {
+          if (a.visivel) a.efeito.desenhar();
+        });
+        requestAnimationFrame(loopSecoes);
+      }
+      requestAnimationFrame(loopSecoes);
+    });
+  </script>
+</body>
+</html>
